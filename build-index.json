@@ -1,23 +1,5 @@
 [
   {
-    "tag": "2026061901",
-    "variant": "nightly-tf5",
-    "repo_commit": "9bac1ea09b655266b19c49e0033d42b08617964d",
-    "vllm_hash": "01192139b",
-    "flashinfer_hash": "9c5ed7c1",
-    "build_flags": "--tf5",
-    "pushed_at": "2026-06-19T22:14:30Z"
-  },
-  {
-    "tag": "2026061901",
-    "variant": "nightly",
-    "repo_commit": "9bac1ea09b655266b19c49e0033d42b08617964d",
-    "vllm_hash": "01192139b",
-    "flashinfer_hash": "9c5ed7c1",
-    "build_flags": "",
-    "pushed_at": "2026-06-19T22:11:01Z"
-  },
-  {
     "tag": "2026062201",
     "variant": "nightly-tf5",
     "repo_commit": "d396c851f5d590334473a0b0e6469875d762f3f1",
@@ -1218,5 +1200,31 @@
     "flashinfer_hash": "3b679769a60444cd6ca612ee858515a53910608b",
     "build_flags": "",
     "pushed_at": "2026-07-31T04:09:43Z"
+  },
+  {
+    "tag": "2026073101",
+    "variant": "nightly-tf5",
+    "image_digest": "sha256:ca1e3dcd519930bb86832438dc7cc5dca6117d37e2a8f6428c7012da541f1a14",
+    "source_digest": "sha256:ab975f8b2fff7bd96271d84ca15862cbbb4efe2b4577553156354ed4113548a7",
+    "source_tag": "nightly-20260731",
+    "repo_commit": "552b618c6e0b092d45a7290916547a7ccc1a078d",
+    "vllm_hash": "aef9bd1e92c059bbe9a2baa4a3e8d35c632842cc",
+    "vllm_version": "0.26.1rc1.dev191+gaef9bd1e9.d20260731",
+    "flashinfer_hash": "dca55465f65ddd8513f79007b3482e9f348e62b3",
+    "build_flags": "",
+    "pushed_at": "2026-07-31T12:37:45Z"
+  },
+  {
+    "tag": "2026073101",
+    "variant": "nightly",
+    "image_digest": "sha256:ca1e3dcd519930bb86832438dc7cc5dca6117d37e2a8f6428c7012da541f1a14",
+    "source_digest": "sha256:ab975f8b2fff7bd96271d84ca15862cbbb4efe2b4577553156354ed4113548a7",
+    "source_tag": "nightly-20260731",
+    "repo_commit": "552b618c6e0b092d45a7290916547a7ccc1a078d",
+    "vllm_hash": "aef9bd1e92c059bbe9a2baa4a3e8d35c632842cc",
+    "vllm_version": "0.26.1rc1.dev191+gaef9bd1e9.d20260731",
+    "flashinfer_hash": "dca55465f65ddd8513f79007b3482e9f348e62b3",
+    "build_flags": "",
+    "pushed_at": "2026-07-31T12:37:45Z"
   }
 ]
