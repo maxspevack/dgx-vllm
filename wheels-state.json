@@ -3,7 +3,7 @@
     "flashinfer_cubin-0.6.17-py3-none-any.whl": "60e0ac5e561bcb4379196ae03ab5bfe1c52e753f6f945e01766230e9356d7622",
     "flashinfer_jit_cache-0.6.17-cp39-abi3-manylinux_2_28_aarch64.whl": "246660adec2eeff86ac94466ce819f8315b0f1d2955e616f1c56a2fc028ffa68",
     "flashinfer_python-0.6.17-py3-none-any.whl": "9eaf686ae5a26905bca78400f2f60b5feba8817582a1b10c3e9132a2c8210354",
-    "vllm-0.26.1rc1.dev244+gd6a593feb.d20260801-cp312-cp312-linux_aarch64.whl": "8722f7bbdc5f9d63f90005c08640cdbc2a85213f422f15fa4cdebe36d9c45e45"
+    "vllm-0.26.1rc1.dev247+ge92dc7a9c.d20260802-cp312-cp312-linux_aarch64.whl": "b5fb74b027080af36fa86614a9e207c651d39a400b4293a131805c2875ddd902"
   },
-  "last_tag": "2026080102"
+  "last_tag": "2026080201"
 }
