@@ -8,6 +8,7 @@ on:
 env:
   IMAGE_BASE: ghcr.io/spark-arena/dgx-vllm-eugr
   SOURCE_IMAGE: docker.io/eugr/spark-vllm
+  SOURCE_IMAGE_B12X: docker.io/eugr/spark-vllm-b12x
 
 concurrency:
   group: mirror
@@ -19,14 +20,17 @@ permissions:
 
 jobs:
   # ──────────────────────────────────────────────────────────────────────
-  # Job 1: Check upstream for a new image (by digest) + track GitHub state
+  # Job 1: Check upstream for new images (by digest) + track GitHub state
   # ──────────────────────────────────────────────────────────────────────
   check-upstream:
     runs-on: ubuntu-latest
     outputs:
       changed: ${{ steps.compare.outputs.changed }}
+      matrix: ${{ steps.compare.outputs.matrix }}
       digest: ${{ steps.fetch.outputs.digest }}
       source_tag: ${{ steps.fetch.outputs.source_tag }}
+      digest_b12x: ${{ steps.fetch.outputs.digest_b12x }}
+      source_tag_b12x: ${{ steps.fetch.outputs.source_tag_b12x }}
       main_sha: ${{ steps.fetch.outputs.main_sha }}
       latest_release: ${{ steps.fetch.outputs.latest_release }}
       known_tags: ${{ steps.fetch.outputs.known_tags }}
@@ -41,6 +45,7 @@ jobs:
         id: stored
         run: |
           echo "digest=$(jq -r '.last_digest // ""' upstream-state.json)" >> "$GITHUB_OUTPUT"
+          echo "digest_b12x=$(jq -r '.last_digest_b12x // ""' upstream-state.json)" >> "$GITHUB_OUTPUT"
           echo "main_sha=$(jq -r '.main_sha // ""' upstream-state.json)" >> "$GITHUB_OUTPUT"
           echo "latest_release=$(jq -r '.latest_release // ""' upstream-state.json)" >> "$GITHUB_OUTPUT"
           echo "known_tags=$(jq -c '.known_tags // []' upstream-state.json)" >> "$GITHUB_OUTPUT"
@@ -51,17 +56,26 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # Manifest digest of eugr's :latest — this is what we mirror and compare on.
-          DIGEST=$(skopeo inspect --no-tags "docker://${SOURCE_IMAGE}:latest" | jq -r '.Digest')
-          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
-          echo "Current upstream digest: ${DIGEST}"
-
           # Resolve the dated tag that matches :latest (record-keeping only), via the
           # public Docker Hub API — no auth needed.
-          TAGS_JSON=$(curl -fsSL "https://hub.docker.com/v2/repositories/eugr/spark-vllm/tags?page_size=100" || echo '{}')
-          SOURCE_TAG=$(echo "$TAGS_JSON" | jq -r --arg d "$DIGEST" \
-            'first(.results[]? | select(.name != "latest" and .digest == $d) | .name) // ""')
-          echo "source_tag=${SOURCE_TAG}" >> "$GITHUB_OUTPUT"
-          echo "Matching source tag: ${SOURCE_TAG:-<none>}"
+          inspect_source() {
+            local image="$1" repo="$2" digest_key="$3" tag_key="$4"
+
+            local digest
+            digest=$(skopeo inspect --no-tags "docker://${image}:latest" | jq -r '.Digest')
+            echo "${digest_key}=${digest}" >> "$GITHUB_OUTPUT"
+            echo "Current upstream digest (${image}): ${digest}"
+
+            local tags_json source_tag
+            tags_json=$(curl -fsSL "https://hub.docker.com/v2/repositories/${repo}/tags?page_size=100" || echo '{}')
+            source_tag=$(echo "$tags_json" | jq -r --arg d "$digest" \
+              'first(.results[]? | select(.name != "latest" and .digest == $d) | .name) // ""')
+            echo "${tag_key}=${source_tag}" >> "$GITHUB_OUTPUT"
+            echo "Matching source tag (${image}): ${source_tag:-<none>}"
+          }
+
+          inspect_source "${SOURCE_IMAGE}"      "eugr/spark-vllm"      "digest"      "source_tag"
+          inspect_source "${SOURCE_IMAGE_B12X}" "eugr/spark-vllm-b12x" "digest_b12x" "source_tag_b12x"
 
           # Supplementary GitHub state (source of truth for eugr's build inputs).
           MAIN_SHA=$(gh api repos/eugr/spark-vllm-docker/git/ref/heads/main --jq '.object.sha' 2>/dev/null || echo "")
@@ -76,39 +90,78 @@ jobs:
       - name: Compare states
         id: compare
         run: |
-          CHANGED="false"
+          # "Forced" triggers are not variant-specific: a manual dispatch or drift in
+          # eugr's GitHub state re-mirrors every variant.
+          FORCED="false"
 
-          # workflow_dispatch always forces a mirror
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            CHANGED="true"
+            FORCED="true"
             echo "Forced mirror via workflow_dispatch"
           fi
-
-          # Primary trigger: the upstream image digest changed (new or redone nightly)
-          if [ "${{ steps.stored.outputs.digest }}" != "${{ steps.fetch.outputs.digest }}" ]; then
-            CHANGED="true"
-            echo "Digest changed: ${{ steps.stored.outputs.digest }} -> ${{ steps.fetch.outputs.digest }}"
-          fi
-
-          # Supplementary: GitHub state drift (recorded even when it alone triggers)
           if [ "${{ steps.stored.outputs.main_sha }}" != "${{ steps.fetch.outputs.main_sha }}" ]; then
-            CHANGED="true"
+            FORCED="true"
             echo "Main SHA changed: ${{ steps.stored.outputs.main_sha }} -> ${{ steps.fetch.outputs.main_sha }}"
           fi
           if [ "${{ steps.stored.outputs.latest_release }}" != "${{ steps.fetch.outputs.latest_release }}" ]; then
-            CHANGED="true"
+            FORCED="true"
             echo "Latest release changed: ${{ steps.stored.outputs.latest_release }} -> ${{ steps.fetch.outputs.latest_release }}"
           fi
           if [ '${{ steps.stored.outputs.known_tags }}' != '${{ steps.fetch.outputs.known_tags }}' ]; then
-            CHANGED="true"
+            FORCED="true"
             echo "Tags changed"
           fi
 
+          # Primary trigger: the upstream image digest changed (new or redone nightly)
+          CHANGED_BASE="$FORCED"
+          if [ "${{ steps.stored.outputs.digest }}" != "${{ steps.fetch.outputs.digest }}" ]; then
+            CHANGED_BASE="true"
+            echo "Digest changed: ${{ steps.stored.outputs.digest }} -> ${{ steps.fetch.outputs.digest }}"
+          fi
+
+          CHANGED_B12X="$FORCED"
+          if [ "${{ steps.stored.outputs.digest_b12x }}" != "${{ steps.fetch.outputs.digest_b12x }}" ]; then
+            CHANGED_B12X="true"
+            echo "b12x digest changed: ${{ steps.stored.outputs.digest_b12x }} -> ${{ steps.fetch.outputs.digest_b12x }}"
+          fi
+
+          # Build the mirror matrix from the variants that actually need mirroring.
+          # `targets` / `variants` are space-separated and iterated by the mirror job.
+          INCLUDE="[]"
+          add_leg() {
+            INCLUDE=$(echo "$INCLUDE" | jq \
+              --arg key "$1" --arg source_image "$2" --arg primary_image "$3" \
+              --arg targets "$4" --arg variants "$5" \
+              --arg digest "$6" --arg source_tag "$7" \
+              '. + [{key: $key, source_image: $source_image, primary_image: $primary_image,
+                     targets: $targets, variants: $variants,
+                     digest: $digest, source_tag: $source_tag}]')
+          }
+
+          if [ "$CHANGED_BASE" = "true" ]; then
+            add_leg "base" "${SOURCE_IMAGE}" "${IMAGE_BASE}-nightly" \
+              "${IMAGE_BASE}-nightly ${IMAGE_BASE}-nightly-tf5" \
+              "nightly nightly-tf5" \
+              "${{ steps.fetch.outputs.digest }}" "${{ steps.fetch.outputs.source_tag }}"
+          fi
+          if [ "$CHANGED_B12X" = "true" ]; then
+            add_leg "b12x" "${SOURCE_IMAGE_B12X}" "${IMAGE_BASE}-nightly-b12x" \
+              "${IMAGE_BASE}-nightly-b12x" \
+              "nightly-b12x" \
+              "${{ steps.fetch.outputs.digest_b12x }}" "${{ steps.fetch.outputs.source_tag_b12x }}"
+          fi
+
+          CHANGED="false"
+          if [ "$(echo "$INCLUDE" | jq 'length')" -gt 0 ]; then
+            CHANGED="true"
+          fi
+
           echo "changed=${CHANGED}" >> "$GITHUB_OUTPUT"
-          echo "Result: changed=${CHANGED}"
+          echo "matrix=$(echo "$INCLUDE" | jq -c '{include: .}')" >> "$GITHUB_OUTPUT"
+          echo "Result: changed=${CHANGED} (base=${CHANGED_BASE} b12x=${CHANGED_B12X})"
+          echo "$INCLUDE" | jq .
 
   # ──────────────────────────────────────────────────────────────────────
-  # Job 2: Compute the next YYYYMMDDNN tag
+  # Job 2: Compute the next YYYYMMDDNN tag (shared across all variants)
   # ──────────────────────────────────────────────────────────────────────
   compute-tag:
     runs-on: ubuntu-latest
@@ -141,11 +194,14 @@ jobs:
           echo "Next tag: ${TAG}"
 
   # ──────────────────────────────────────────────────────────────────────
-  # Job 3: Mirror eugr's image (add provenance labels) + publish tags
+  # Job 3: Mirror eugr's images (add provenance labels) + publish tags
   # ──────────────────────────────────────────────────────────────────────
   mirror:
     runs-on: ubuntu-latest
     needs: [ check-upstream, compute-tag ]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.check-upstream.outputs.matrix) }}
     steps:
       - name: Free disk space
         run: |
@@ -167,12 +223,13 @@ jobs:
       - name: Pull image and extract build metadata
         id: metadata
         env:
-          DIGEST: ${{ needs.check-upstream.outputs.digest }}
+          SOURCE: ${{ matrix.source_image }}
+          DIGEST: ${{ matrix.digest }}
         run: |
           # Pull the pinned digest (arm64) and copy out the authoritative metadata file
           # WITHOUT executing the image (create/cp work cross-arch on x86).
-          docker pull --platform linux/arm64 "${SOURCE_IMAGE}@${DIGEST}"
-          CID=$(docker create "${SOURCE_IMAGE}@${DIGEST}")
+          docker pull --platform linux/arm64 "${SOURCE}@${DIGEST}"
+          CID=$(docker create "${SOURCE}@${DIGEST}")
           docker cp "${CID}:/workspace/build-metadata.yaml" ./build-metadata.yaml || echo "" > ./build-metadata.yaml
           docker rm "${CID}" >/dev/null
 
@@ -196,30 +253,31 @@ jobs:
 
       - name: Build labeled image
         env:
-          DIGEST: ${{ needs.check-upstream.outputs.digest }}
+          SOURCE: ${{ matrix.source_image }}
+          DIGEST: ${{ matrix.digest }}
         run: |
           docker build -f "$GITHUB_WORKSPACE/Dockerfile.mirror" \
             --platform linux/arm64 \
-            --build-arg SOURCE_IMAGE="${SOURCE_IMAGE}@${DIGEST}" \
+            --build-arg SOURCE_IMAGE="${SOURCE}@${DIGEST}" \
             --build-arg SPARKRUN_REPO_COMMIT="${{ steps.metadata.outputs.repo_commit }}" \
             --build-arg SPARKRUN_VLLM_HASH="${{ steps.metadata.outputs.vllm_hash }}" \
             --build-arg SPARKRUN_VLLM_VERSION="${{ steps.metadata.outputs.vllm_version }}" \
             --build-arg SPARKRUN_FLASHINFER_HASH="${{ steps.metadata.outputs.flashinfer_hash }}" \
             --build-arg SPARKRUN_BUILD_FLAGS="" \
-            --build-arg SPARKRUN_SOURCE_IMAGE="${SOURCE_IMAGE}" \
+            --build-arg SPARKRUN_SOURCE_IMAGE="${SOURCE}" \
             --build-arg SPARKRUN_SOURCE_DIGEST="${DIGEST}" \
-            --build-arg SPARKRUN_SOURCE_TAG="${{ needs.check-upstream.outputs.source_tag }}" \
-            -t "${IMAGE_BASE}-nightly:${{ needs.compute-tag.outputs.tag }}" \
+            --build-arg SPARKRUN_SOURCE_TAG="${{ matrix.source_tag }}" \
+            -t "${{ matrix.primary_image }}:${{ needs.compute-tag.outputs.tag }}" \
             "$GITHUB_WORKSPACE"
 
-      - name: Tag and push (nightly + tf5 alias, 3 tags each)
+      - name: Tag and push (3 tags per target image)
         id: push
         run: |
-          BUILT="${IMAGE_BASE}-nightly:${{ needs.compute-tag.outputs.tag }}"
+          BUILT="${{ matrix.primary_image }}:${{ needs.compute-tag.outputs.tag }}"
           FULL_TAG="${{ needs.compute-tag.outputs.tag }}"
           DATE_TAG="${{ needs.compute-tag.outputs.date_tag }}"
 
-          for IMG in "${IMAGE_BASE}-nightly" "${IMAGE_BASE}-nightly-tf5"; do
+          for IMG in ${{ matrix.targets }}; do
             for T in "$FULL_TAG" "$DATE_TAG" latest; do
               docker tag "$BUILT" "${IMG}:${T}"
               docker push "${IMG}:${T}"
@@ -228,30 +286,32 @@ jobs:
 
           # Our published manifest digest (diverges from eugr's — we added labels).
           IMAGE_DIGEST=$(docker inspect --format='{{range .RepoDigests}}{{println .}}{{end}}' "$BUILT" \
-            | grep "${IMAGE_BASE}-nightly@" | head -1 | sed 's/.*@//')
+            | grep "${{ matrix.primary_image }}@" | head -1 | sed 's/.*@//')
           echo "image_digest=${IMAGE_DIGEST}" >> "$GITHUB_OUTPUT"
           echo "Published image digest: ${IMAGE_DIGEST}"
 
       - name: Save build-index entries
         env:
-          DIGEST: ${{ needs.check-upstream.outputs.digest }}
+          DIGEST: ${{ matrix.digest }}
         run: |
           mkdir -p /tmp/build-index
           PUSHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          for VARIANT in nightly nightly-tf5; do
+          for VARIANT in ${{ matrix.variants }}; do
             jq -n \
               --arg tag "${{ needs.compute-tag.outputs.tag }}" \
               --arg variant "$VARIANT" \
               --arg image_digest "${{ steps.push.outputs.image_digest }}" \
+              --arg source_image "${{ matrix.source_image }}" \
               --arg source_digest "${DIGEST}" \
-              --arg source_tag "${{ needs.check-upstream.outputs.source_tag }}" \
+              --arg source_tag "${{ matrix.source_tag }}" \
               --arg repo_commit "${{ steps.metadata.outputs.repo_commit }}" \
               --arg vllm_hash "${{ steps.metadata.outputs.vllm_hash }}" \
               --arg vllm_version "${{ steps.metadata.outputs.vllm_version }}" \
               --arg flashinfer_hash "${{ steps.metadata.outputs.flashinfer_hash }}" \
               --arg pushed_at "$PUSHED_AT" \
               '{tag: $tag, variant: $variant, image_digest: $image_digest,
-                source_digest: $source_digest, source_tag: $source_tag,
+                source_image: $source_image, source_digest: $source_digest,
+                source_tag: $source_tag,
                 repo_commit: $repo_commit, vllm_hash: $vllm_hash,
                 vllm_version: $vllm_version, flashinfer_hash: $flashinfer_hash,
                 build_flags: "", pushed_at: $pushed_at}' \
@@ -261,8 +321,26 @@ jobs:
       - name: Upload build-index entries
         uses: actions/upload-artifact@v4
         with:
-          name: build-index
+          name: build-index-${{ matrix.key }}
           path: /tmp/build-index/*.json
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Job 4: Mirror the prebuilt wheels (variant-independent — sourced from
+  #        eugr's GitHub releases, not from any container image)
+  # ──────────────────────────────────────────────────────────────────────
+  mirror-wheels:
+    runs-on: ubuntu-latest
+    needs: [ check-upstream, compute-tag ]
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download upstream wheels
         id: wheels-fetch
@@ -339,11 +417,11 @@ jobs:
           path: /tmp/wheels-state-new.json
 
   # ──────────────────────────────────────────────────────────────────────
-  # Job 4: Update state files and commit after a successful mirror
+  # Job 5: Update state files and commit after a successful mirror
   # ──────────────────────────────────────────────────────────────────────
   update-state:
     runs-on: ubuntu-latest
-    needs: [ check-upstream, compute-tag, mirror ]
+    needs: [ check-upstream, compute-tag, mirror, mirror-wheels ]
     steps:
       - name: Checkout this repo
         uses: actions/checkout@v4
@@ -351,7 +429,8 @@ jobs:
       - name: Download build-index entries
         uses: actions/download-artifact@v4
         with:
-          name: build-index
+          pattern: build-index-*
+          merge-multiple: true
           path: /tmp/build-index-entries
 
       - name: Download wheels-state update
@@ -397,6 +476,8 @@ jobs:
           {
             "last_digest": "${{ needs.check-upstream.outputs.digest }}",
             "source_tag": "${{ needs.check-upstream.outputs.source_tag }}",
+            "last_digest_b12x": "${{ needs.check-upstream.outputs.digest_b12x }}",
+            "source_tag_b12x": "${{ needs.check-upstream.outputs.source_tag_b12x }}",
             "main_sha": "${{ needs.check-upstream.outputs.main_sha }}",
             "latest_release": "${{ needs.check-upstream.outputs.latest_release }}",
             "known_tags": ${{ needs.check-upstream.outputs.known_tags }}
