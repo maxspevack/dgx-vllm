@@ -1,19 +1,6 @@
 [
   {
     "tag": "2026071101",
-    "variant": "nightly-tf5",
-    "image_digest": "sha256:e0e9bc2392290c0655d98bd3d5e692e40736f0c6c21a88638a8c0e0ec9b45816",
-    "source_digest": "sha256:5c033d442a9a1c42428a235a56b80a522d4fa638bf59e40af06ac28863313595",
-    "source_tag": "nightly-20260710",
-    "repo_commit": "8a6a0071ace030567af47bda3db43adbaeaff71e",
-    "vllm_hash": "96bb8928613c252d0fd98fcff72e31ebdd8c723e",
-    "vllm_version": "0.25.1.dev24+g96bb89286.d20260710",
-    "flashinfer_hash": "2c0d595fc5083ef00ecc022db07506cd500226bb",
-    "build_flags": "",
-    "pushed_at": "2026-07-11T19:45:20Z"
-  },
-  {
-    "tag": "2026071101",
     "variant": "nightly",
     "image_digest": "sha256:e0e9bc2392290c0655d98bd3d5e692e40736f0c6c21a88638a8c0e0ec9b45816",
     "source_digest": "sha256:5c033d442a9a1c42428a235a56b80a522d4fa638bf59e40af06ac28863313595",
@@ -1322,5 +1309,19 @@
     "flashinfer_hash": "2ab910c58fdd2392914ea05e2a8714946ac0eef6",
     "build_flags": "",
     "pushed_at": "2026-08-10T12:18:19Z"
+  },
+  {
+    "tag": "2026081002",
+    "variant": "nightly-b12x",
+    "image_digest": "sha256:63dec6a56fef369b65d27fd52dbe9a46a3dfa5008a85c9fa2d762960549de50f",
+    "source_image": "docker.io/eugr/spark-vllm-b12x",
+    "source_digest": "sha256:a2c0d22a2393aaeae58529cfdb98ba3163893640034c9674a8ecdd1a7700bfab",
+    "source_tag": "nightly-20260810",
+    "repo_commit": "e5f3cf9e5320d9a424966a801570bf452405d122",
+    "vllm_hash": "e2666d9a65f41fc376607531453cbd57c4c71016",
+    "vllm_version": "0.1.dev19024+ge2666d9a6.d20260810",
+    "flashinfer_hash": "2ab910c58fdd2392914ea05e2a8714946ac0eef6",
+    "build_flags": "",
+    "pushed_at": "2026-08-10T14:07:55Z"
   }
 ]
