@@ -1,9 +1,9 @@
 {
-  "last_digest": "sha256:2858d85ca468c917fa27575675da8a4d48969c743eb2730af694f077e48b0019",
-  "source_tag": "nightly-20260810",
-  "last_digest_b12x": "sha256:a2c0d22a2393aaeae58529cfdb98ba3163893640034c9674a8ecdd1a7700bfab",
-  "source_tag_b12x": "nightly-20260810",
-  "main_sha": "3ad56106227e5584b3e3a92c8559332ded46385a",
+  "last_digest": "sha256:58862b388e0fab05a5c9b673f21d1d7b41a1123953a2d9ace49aae6c79319869",
+  "source_tag": "nightly-20260812",
+  "last_digest_b12x": "sha256:32ddcd93c05472021824f1223aa5560297b0d933262e60e9a8a08c4b5259235f",
+  "source_tag_b12x": "nightly-20260812",
+  "main_sha": "81b0a03ac7c1821db960569c0524ef4274b7f575",
   "latest_release": "prebuilt-vllm-current",
   "known_tags": ["staging-current-1772875976","staging-current-1772696532","staging-current-1772696417","staging-current-1772668553","staging-current-1772668424","staging-current-1772642791","staging-current-1772642670","staging-current-1772609005","staging-current-1772608894","staging-current-1772608818","prebuilt-vllm-current","prebuilt-flashinfer-current"]
 }
