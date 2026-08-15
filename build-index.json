@@ -1,44 +1,5 @@
 [
   {
-    "tag": "2026071901",
-    "variant": "nightly-tf5",
-    "image_digest": "sha256:59733d4f4127a17d42fd29166c2adeb9a9ac66056db5f63c2e14105cf859cc2a",
-    "source_digest": "sha256:6df3d08cd104b7278c1a5ac8116a38426c0d7c2c77c0fd55777fa0d80c4d8b6e",
-    "source_tag": "nightly-20260719",
-    "repo_commit": "562ed293d2cd106efe147f4f27d8f2861f74067e",
-    "vllm_hash": "e45954f566e11836bb85e230339d83e6e3567dcd",
-    "vllm_version": "0.23.1rc1.dev1273+ge45954f56.d20260719",
-    "flashinfer_hash": "f212ec8230486e3615502b8af75fe7022c60b2f3",
-    "build_flags": "",
-    "pushed_at": "2026-07-19T14:10:51Z"
-  },
-  {
-    "tag": "2026071901",
-    "variant": "nightly",
-    "image_digest": "sha256:59733d4f4127a17d42fd29166c2adeb9a9ac66056db5f63c2e14105cf859cc2a",
-    "source_digest": "sha256:6df3d08cd104b7278c1a5ac8116a38426c0d7c2c77c0fd55777fa0d80c4d8b6e",
-    "source_tag": "nightly-20260719",
-    "repo_commit": "562ed293d2cd106efe147f4f27d8f2861f74067e",
-    "vllm_hash": "e45954f566e11836bb85e230339d83e6e3567dcd",
-    "vllm_version": "0.23.1rc1.dev1273+ge45954f56.d20260719",
-    "flashinfer_hash": "f212ec8230486e3615502b8af75fe7022c60b2f3",
-    "build_flags": "",
-    "pushed_at": "2026-07-19T14:10:51Z"
-  },
-  {
-    "tag": "2026072001",
-    "variant": "nightly-tf5",
-    "image_digest": "sha256:6681ca1a97dadb383b62393f10f99356181ecee94f341cb69ed88af1e1fc4b55",
-    "source_digest": "sha256:c411eb832cd1e44e3909f98a94ac0cc09ae5dd556770fe69cb7ada9db802d0b7",
-    "source_tag": "nightly-20260720",
-    "repo_commit": "3fba416a3560e35e92fa9711a11b635ab8716d88",
-    "vllm_hash": "e765bbc97d54840804921e20f8d42d2895e5a8c3",
-    "vllm_version": "0.23.1rc1.dev1302+ge765bbc97.d20260720",
-    "flashinfer_hash": "c83607a9bdaaff51413a1847df401b63a0481c99",
-    "build_flags": "",
-    "pushed_at": "2026-07-20T20:57:52Z"
-  },
-  {
     "tag": "2026072001",
     "variant": "nightly",
     "image_digest": "sha256:6681ca1a97dadb383b62393f10f99356181ecee94f341cb69ed88af1e1fc4b55",
@@ -1350,5 +1311,47 @@
     "flashinfer_hash": "555492e2bc6e6dabdba1b46eeceb6d52be479cf1",
     "build_flags": "",
     "pushed_at": "2026-08-14T22:53:56Z"
+  },
+  {
+    "tag": "2026081405",
+    "variant": "nightly-b12x",
+    "image_digest": "sha256:3012a2c951b5a64a162df63745f2bf7617c189a3e8f5962ef7ad4166cf82b96c",
+    "source_image": "docker.io/eugr/spark-vllm-b12x",
+    "source_digest": "sha256:62749cdc94f9bbe92b028d4f6607d838cf690f0ac8c862cd159000a6dc1fb2b3",
+    "source_tag": "nightly-20260814",
+    "repo_commit": "358bf26e3d7d315450a6159ccdc0b38cbbd6b855",
+    "vllm_hash": "ad848fc4141f201489db18d5453c50b312245a0a",
+    "vllm_version": "0.1.dev20003+gad848fc41.d20260815",
+    "flashinfer_hash": "555492e2bc6e6dabdba1b46eeceb6d52be479cf1",
+    "build_flags": "",
+    "pushed_at": "2026-08-15T04:13:48Z"
+  },
+  {
+    "tag": "2026081405",
+    "variant": "nightly-tf5",
+    "image_digest": "sha256:3b1f164de541d0a6721df2e2aa07b70cae11d021d9340a974111d6e32dfa0019",
+    "source_image": "docker.io/eugr/spark-vllm",
+    "source_digest": "sha256:ab89584706575a7af48a3d5a2a92bc48a5432781fb87925a181d8bb5eab4f5d3",
+    "source_tag": "nightly-20260814",
+    "repo_commit": "54672f7ec1688fa9e01e0e792bedc8cf6e6a2286",
+    "vllm_hash": "aa3100357322995b201d5348c5490596a7bd70a9",
+    "vllm_version": "0.27.2rc1.dev88+gaa3100357.d20260814",
+    "flashinfer_hash": "555492e2bc6e6dabdba1b46eeceb6d52be479cf1",
+    "build_flags": "",
+    "pushed_at": "2026-08-15T04:08:38Z"
+  },
+  {
+    "tag": "2026081405",
+    "variant": "nightly",
+    "image_digest": "sha256:3b1f164de541d0a6721df2e2aa07b70cae11d021d9340a974111d6e32dfa0019",
+    "source_image": "docker.io/eugr/spark-vllm",
+    "source_digest": "sha256:ab89584706575a7af48a3d5a2a92bc48a5432781fb87925a181d8bb5eab4f5d3",
+    "source_tag": "nightly-20260814",
+    "repo_commit": "54672f7ec1688fa9e01e0e792bedc8cf6e6a2286",
+    "vllm_hash": "aa3100357322995b201d5348c5490596a7bd70a9",
+    "vllm_version": "0.27.2rc1.dev88+gaa3100357.d20260814",
+    "flashinfer_hash": "555492e2bc6e6dabdba1b46eeceb6d52be479cf1",
+    "build_flags": "",
+    "pushed_at": "2026-08-15T04:08:38Z"
   }
 ]
